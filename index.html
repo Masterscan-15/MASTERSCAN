@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approval Flow System</title>
+    <style>
+        /* Google Fonts Import */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #FF4B76;
+            --primary-rgb: 255, 75, 118;
+            --primary-dark: #E63E64;
+            --secondary: #4B84FF;
+            --secondary-rgb: 75, 132, 255;
+            /* Blue from "Sport" / "Water" button */
+            --accent: #8b5cf6;
+            --background: #F5F6FA;
+            /* Light Gray background */
+            --surface: #FFFFFF;
+            /* White Cards */
+            --surface-light: #F8F9FC;
+            --text: #2D3436;
+            /* Dark Text */
+            --text-muted: #636E72;
+            --success: #10b981;
+            --error: #FF4B76;
+            --border: #F0F0F0;
+            --glass: rgba(255, 255, 255, 0.95);
+            --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+            --radius: 2rem;
+            --radius-sm: 1rem;
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: transparent;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text);
+            cursor: pointer;
+            letter-spacing: -0.5px;
+        }
+
+
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            background: var(--surface);
+            padding: 0.5rem;
+            border-radius: 999px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+        }
+
+        .nav-btn:hover {
+            color: var(--primary);
+        }
+
+        .nav-btn.active {
+            color: white;
+            background: var(--secondary);
+            /* Active state Blue */
+            box-shadow: 0 4px 12px rgba(75, 132, 255, 0.3);
+        }
+
+        /* Sections */
+        section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+            color: var(--text);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: var(--primary);
+            /* Pink CTA */
+            color: white;
+            padding: 1.25rem 3.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -5px rgba(255, 75, 118, 0.4);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(255, 75, 118, 0.5);
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--background);
+            border-color: var(--secondary);
+            color: var(--secondary);
+            transform: translateX(-3px);
+        }
+
+        .back-btn svg {
+            transition: transform 0.3s ease;
+        }
+
+        .back-btn:hover svg {
+            transform: translateX(-3px);
+        }
+
+        /* Forms */
+        .form-card {
+            background: var(--surface);
+            border: none;
+            border-radius: var(--radius);
+            padding: 3rem;
+            max-width: 480px;
+            margin: 1rem auto;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--background);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-main);
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            background: white;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(75, 132, 255, 0.1);
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            margin-top: 2rem;
+        }
+
+        .status-card {
+            background: var(--surface);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.1);
+            color: #f59e0b;
+        }
+
+        .status-approved {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-rejected {
+            background: rgba(255, 75, 118, 0.1);
+            color: var(--primary);
+        }
+
+        /* Loader */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #E2E8F0;
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Setup Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(45, 52, 54, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 3rem;
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 90%;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .vote-list {
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            border-top: 2px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .vote-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .highlight {
+            background: #ffeb3b;
+            color: #000;
+            padding: 2px 0;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        /* File List Styles */
+        .file-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .remove-file {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .remove-file:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Setup Modal -->
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Connect to Backend</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Please enter the Web App URL from your Google
+                Apps Script deployment.</p>
+            <div class="form-group">
+                <label class="form-label">Web App URL</label>
+                <input type="text" id="api-url" class="form-input" placeholder="https://script.google.com/macros/s/...">
+            </div>
+            <button id="save-api-btn" class="cta-btn" style="width: 100%;">Connect & Start</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">Request Form</div>
+        <div class="nav-links">
+            <button class="nav-btn active" data-target="home-section">Home</button>
+            <button class="nav-btn" data-target="request-section">New Request</button>
+            <button class="nav-btn" data-target="status-section">Check Status</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+
+        <!-- Home Section -->
+        <section id="home-section" class="active">
+            <div class="hero">
+                <h2
+                    style="font-size: 2.5rem; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 1.5rem; font-weight: 800;">
+                    WELCOME</h2>
+                <h1><span style="color: var(--secondary);">MASTER</span><span style="color: #ef4444;">SCAN</span></h1>
+                <p>Submit requests, track real-time status, and manage approvals efficiently. A powerful system built
+                    for transparency and speed.</p>
+                <button class="cta-btn"
+                    onclick="document.querySelector('[data-target=\'request-section\']').click()">Request</button>
+            </div>
+        </section>
+
+        <!-- Request Section -->
+        <section id="request-section">
+            <div class="hero" style="padding: 2rem 1rem; padding-bottom: 1rem;">
+                <h1>Submit <span>Request</span></h1>
+                <p>Fill in the details below to initiate a new approval process.</p>
+            </div>
+            <div class="form-card">
+                <form id="request-form">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="name" class="form-input" required placeholder="Ex. Name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Purpose</label>
+                        <textarea name="purpose" class="form-input" required placeholder="Ex. Purpose" rows="4"
+                            style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; gap: 1rem;">
+                            <div style="flex: 2;">
+                                <label class="form-label">Amount</label>
+                                <input type="number" name="amount" class="form-input" required placeholder="0.00">
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="form-label">Currency</label>
+                                <select name="currency" id="currency-select" class="form-select">
+                                    <option value="SGD">SGD</option>
+                                    <option value="OMR">OMR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="custom-currency-group" class="hidden" style="margin-top: 1rem;">
+                            <label class="form-label">Specify Currency</label>
+                            <input type="text" id="custom-currency" class="form-input" placeholder="Ex. INR">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Attachments (Optional)</label>
+                        <input type="file" id="file-input" class="form-input" style="padding: 10px 12px; height: auto;"
+                            multiple>
+                        <div id="file-list" class="file-list"></div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                            You can click "Choose Files" multiple times to add more documents.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-input" required placeholder="you@company.com">
+                    </div>
+                    <button type="submit" class="cta-btn" style="width: 100%;">Submit Request</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Status Section -->
+        <section id="status-section">
+            <div id="status-search-view">
+                <div class="hero" style="padding: 2rem 1rem; padding-bottom: 1rem;">
+                    <h1>Track <span>Status</span></h1>
+                    <p>Enter your email to view the progress of your submitted requests.</p>
+                </div>
+                <div class="form-card">
+                    <form id="status-form">
+                        <div class="form-group">
+                            <label class="form-label">Your Email</label>
+                            <input type="email" id="status-email" class="form-input" required
+                                placeholder="you@company.com">
+                        </div>
+                        <button type="submit" class="cta-btn" style="width: 100%;">View Requests</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="status-results-view" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; color: var(--text);">Your Requests</h2>
+                    <button id="back-to-search-btn" class="back-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        Back
+                    </button>
+                </div>
+                <div id="keyword-search-container" style="margin-bottom: 2rem;">
+                    <div style="position: relative;">
+                        <input type="text" id="keyword-search" class="form-input"
+                            placeholder="Search by purpose, ID, or amount..."
+                            style="padding-left: 3rem; background: var(--surface);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            style="position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                </div>
+                <div id="status-results" class="status-grid">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        const app = {
+            apiUrl: "https://script.google.com/macros/s/AKfycbxCbr5j69aQBka65zxAUSbCCQ39g0rOcfUCtOVeP4Gjf9KQlsTbNKm5nV6Z2JtLezuiNg/exec",
+
+            init() {
+                this.cacheDOM();
+                this.bindEvents();
+                this.checkSetup();
+            },
+
+            cacheDOM() {
+                this.modal = document.getElementById('setup-modal');
+                this.apiUrlInput = document.getElementById('api-url');
+                this.saveApiBtn = document.getElementById('save-api-btn');
+                this.loader = document.getElementById('loader');
+
+                this.navBtns = document.querySelectorAll('.nav-btn');
+                this.sections = document.querySelectorAll('section');
+
+                this.reqForm = document.getElementById('request-form');
+                this.statusForm = document.getElementById('status-form');
+
+                // Currency Inputs
+                this.currencySelect = document.getElementById('currency-select');
+                this.customCurrencyGroup = document.getElementById('custom-currency-group');
+                this.customCurrencyInput = document.getElementById('custom-currency');
+
+                this.statusResults = document.getElementById('status-results');
+                this.statusSearchView = document.getElementById('status-search-view');
+                this.statusResultsView = document.getElementById('status-results-view');
+                this.backToSearchBtn = document.getElementById('back-to-search-btn');
+                this.keywordSearch = document.getElementById('keyword-search');
+                this.fileInput = document.getElementById('file-input');
+                this.fileListContainer = document.getElementById('file-list');
+                this.selectedFiles = []; // Internal array to track files
+                this.fetchedRequests = []; // Store fetched data for filtering
+            },
+
+            bindEvents() {
+                // Setup
+                this.saveApiBtn.addEventListener('click', () => {
+                    const url = this.apiUrlInput.value.trim();
+                    if (url) {
+                        localStorage.setItem('app_api_url', url);
+                        this.apiUrl = url;
+                        this.modal.classList.add('hidden');
+                    }
+                });
+
+                // Navigation
+                this.navBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.target.dataset.target;
+
+                        // Active Class
+                        this.navBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+
+                        // Show Section
+                        this.sections.forEach(s => {
+                            s.classList.remove('active');
+                            if (s.id === target) {
+                                s.classList.add('active');
+                                // Reset status view if navigating to it
+                                if (target === 'status-section') {
+                                    this.resetStatusView();
+                                }
+                            }
+                        });
+                    });
+                });
+
+                // Status Back Button
+                this.backToSearchBtn.addEventListener('click', () => {
+                    this.resetStatusView();
+                });
+
+                // File Input Listener
+                this.fileInput.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    files.forEach(file => {
+                        // Avoid duplicates if possible (optional)
+                        const isDuplicate = this.selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                        if (!isDuplicate) {
+                            this.selectedFiles.push(file);
+                        }
+                    });
+                    this.renderFileList();
+                    // Clear the input so the same file can be selected again if removed
+                    this.fileInput.value = '';
+                });
+
+                // Currency Toggle
+                this.currencySelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'Other') {
+                        this.customCurrencyGroup.classList.remove('hidden');
+                    } else {
+                        this.customCurrencyGroup.classList.add('hidden');
+                    }
+                });
+
+                // Forms
+                this.reqForm.addEventListener('submit', (e) => this.handleRequest(e));
+                this.statusForm.addEventListener('submit', (e) => this.handleStatus(e));
+
+                // Keyword Filter
+                this.keywordSearch.addEventListener('input', () => this.filterRequests());
+            },
+
+            checkSetup() {
+                if (!this.apiUrl) {
+                    this.modal.classList.remove('hidden');
+                } else {
+                    this.modal.classList.add('hidden');
+                }
+            },
+
+            showLoader(show) {
+                if (show) this.loader.classList.remove('hidden');
+                else this.loader.classList.add('hidden');
+            },
+
+            resetStatusView() {
+                if (this.statusSearchView && this.statusResultsView) {
+                    this.statusSearchView.classList.remove('hidden');
+                    this.statusResultsView.classList.add('hidden');
+                    this.statusResults.innerHTML = '';
+                    document.getElementById('status-email').value = '';
+                    if (this.keywordSearch) this.keywordSearch.value = '';
+                    this.fetchedRequests = [];
+                }
+            },
+
+            renderFileList() {
+                this.fileListContainer.innerHTML = '';
+                this.selectedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <div class="file-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                            <span>${file.name}</span>
+                        </div>
+                        <button type="button" class="remove-file" data-index="${index}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    `;
+                    this.fileListContainer.appendChild(item);
+                });
+
+                // Add remove listeners
+                this.fileListContainer.querySelectorAll('.remove-file').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = parseInt(e.currentTarget.dataset.index);
+                        this.selectedFiles.splice(index, 1);
+                        this.renderFileList();
+                    });
+                });
+            },
+
+            async sendRequest(data) {
+                if (!this.apiUrl) {
+                    alert("API URL not configured!");
+                    return;
+                }
+
+                try {
+                    // Note: Sending as text/plain to avoid CORS Preflight issues with Google Apps Script
+                    const response = await fetch(this.apiUrl, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                    alert("Connection Failed. Check your URL or Internet.");
+                    return { status: "error", message: error.toString() };
+                }
+            },
+
+            async handleRequest(e) {
+                e.preventDefault();
+                const submitBtn = this.reqForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Submitting...";
+
+                this.showLoader(true);
+
+                const formData = new FormData(this.reqForm);
+
+                let currency = formData.get('currency');
+                if (currency === 'Other') {
+                    currency = this.customCurrencyInput.value.trim();
+                    if (!currency) currency = 'Other'; // Fallback
+                }
+
+                const data = {
+                    action: 'submit',
+                    name: formData.get('name'),
+                    purpose: formData.get('purpose'),
+                    amount: formData.get('amount'),
+                    currency: currency,
+                    email: formData.get('email'),
+                    files: [] // Changed 'file' to 'files' array
+                };
+
+                // If files are internal array has items, convert each to Base64
+                if (this.selectedFiles.length > 0) {
+                    try {
+                        data.files = await Promise.all(
+                            this.selectedFiles.map(file => this.fileToBase64(file))
+                        );
+                    } catch (err) {
+                        console.error("File Read Error:", err);
+                        alert("Failed to read files. Please try again.");
+                        this.showLoader(false);
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "Submit Request";
+                        return;
+                    }
+                }
+
+                const res = await this.sendRequest(data);
+                this.showLoader(false);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Request";
+
+                if (res.status === 'success') {
+                    alert(res.message || "Request Submitted Successfully!");
+                    this.reqForm.reset();
+                    this.selectedFiles = [];
+                    this.renderFileList();
+                    this.customCurrencyGroup.classList.add('hidden');
+                    // Go to home
+                    document.querySelector('[data-target="home-section"]').click();
+                } else if (res.status === 'warning') {
+                    alert("⚠️ " + res.message);
+                    this.reqForm.reset();
+                    this.selectedFiles = [];
+                    this.renderFileList();
+                    this.customCurrencyGroup.classList.add('hidden');
+                    document.querySelector('[data-target="home-section"]').click();
+                } else {
+                    alert("❌ Error: " + res.message);
+                }
+            },
+
+            async handleStatus(e) {
+                e.preventDefault();
+                this.showLoader(true);
+                this.statusResults.innerHTML = '';
+
+                const email = document.getElementById('status-email').value;
+                const res = await this.sendRequest({
+                    action: 'get_status',
+                    email: email
+                });
+
+                this.showLoader(false);
+
+                if (res.status === 'success') {
+                    this.fetchedRequests = res.data;
+                    if (this.keywordSearch) this.keywordSearch.value = '';
+
+                    // Show results view, hide search view
+                    this.statusSearchView.classList.add('hidden');
+                    this.statusResultsView.classList.remove('hidden');
+
+                    this.renderFilteredResults(this.fetchedRequests);
+
+                } else {
+                    alert("Error: " + res.message);
+                }
+            },
+
+            filterRequests() {
+                const query = this.keywordSearch.value.toLowerCase().trim();
+                if (!query) {
+                    this.renderFilteredResults(this.fetchedRequests);
+                    return;
+                }
+
+                const filtered = this.fetchedRequests.filter(req => {
+                    return (
+                        String(req.purpose).toLowerCase().includes(query) ||
+                        String(req.id).toLowerCase().includes(query) ||
+                        String(req.amount).toLowerCase().includes(query) ||
+                        String(req.name).toLowerCase().includes(query) ||
+                        String(req.status).toLowerCase().includes(query)
+                    );
+                });
+
+                this.renderFilteredResults(filtered);
+            },
+
+            renderFilteredResults(requests) {
+                this.statusResults.innerHTML = '';
+                if (requests.length === 0) {
+                    this.statusResults.innerHTML = '<p style="text-align:center; color:var(--text-muted); grid-column: 1/-1;">No matching requests found.</p>';
+                    return;
+                }
+
+                const query = this.keywordSearch.value.trim();
+
+                // Clone and reverse to show newest first without modifying original
+                [...requests].reverse().forEach(req => {
+                    this.renderRequestCard(req, query);
+                });
+            },
+
+            highlightText(text, query) {
+                if (!query) return text;
+                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                return String(text).replace(regex, '<span class="highlight">$1</span>');
+            },
+
+            renderRequestCard(req, query = "") {
+                const date = new Date(req.timestamp).toLocaleDateString();
+                let statusClass = 'status-pending';
+                if (req.status === 'Approved') statusClass = 'status-approved';
+                if (req.status === 'Rejected') statusClass = 'status-rejected';
+                if (req.status === 'Check Status') statusClass = 'status-pending'; // Or new class
+
+                const highlightedPurpose = this.highlightText(req.purpose, query);
+                const highlightedId = this.highlightText(req.id, query);
+                const highlightedAmount = this.highlightText(req.amount, query);
+                const highlightedName = this.highlightText(req.name, query);
+
+                // Handle multiple attachments
+                let attachmentHtml = '';
+                if (req.attachment) {
+                    const urls = req.attachment.split('\n').filter(url => url.trim() !== '');
+                    attachmentHtml = `
+                        <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${urls.map((url, idx) => `
+                                <a href="${url}" target="_blank" class="status-badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                    Attachment ${urls.length > 1 ? idx + 1 : ''}
+                                </a>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Vote breakdown
+                let votesHtml = '';
+                if (req.votes && req.votes.length > 0) {
+                    votesHtml = '<div class="vote-list">';
+                    req.votes.forEach(v => {
+                        let color = '#fbbf24'; // pending
+                        // Revert to "Pending" for production feel
+                        // if (v.status === 'Pending') v.status = 'Waiting...'; 
+
+                        const statusLower = String(v.status).toLowerCase();
+                        if (statusLower === 'approved') color = '#10b981';
+                        if (statusLower === 'rejected') color = '#ef4444';
+
+                        votesHtml += `
+                            <div class="vote-item">
+                                <span>${this.highlightText(v.owner, query)}</span>
+                                <span style="color:${color}; font-weight:600;">${this.highlightText(v.status, query)}</span>
+                            </div>
+                        `;
+                    });
+                    votesHtml += '</div>';
+                }
+
+                const html = `
+                    <div class="status-card">
+                        <div class="status-header">
+                            <div>
+                                <h3 style="font-size:1.1rem; color:var(--text);">${highlightedPurpose}</h3>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">ID: ${highlightedId} • ${date}</span>
+                            </div>
+                            <span class="status-badge ${statusClass}">${this.highlightText(req.status, query)}</span>
+                        </div>
+                        <div style="margin-bottom:0.5rem;">
+                            <strong style="color:var(--primary); font-size:1.2rem;">${highlightedAmount} ${this.highlightText(req.currency, query)}</strong>
+                        </div>
+                        <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
+                            Requester: ${highlightedName}
+                        </div>
+                        ${attachmentHtml}
+                        ${votesHtml}
+                    </div>
+                `;
+                this.statusResults.insertAdjacentHTML('beforeend', html);
+            },
+
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        resolve({
+                            base64: reader.result.split(',')[1],
+                            name: file.name,
+                            mimeType: file.type
+                        });
+                    };
+                    reader.onerror = error => reject(error);
+                });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+
+</html>
