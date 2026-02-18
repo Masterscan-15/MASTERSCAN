@@ -494,57 +494,42 @@
         <section id="request-section">
             <div class="hero" style="padding: 2rem 1rem; padding-bottom: 1rem;">
                 <h1>Submit <span>Request</span></h1>
-                <p>Fill in the details below to initiate a new approval process.</p>
+                <p>Add items to your request below.</p>
             </div>
-            <div class="form-card">
-                <form id="request-form">
+
+            <form id="request-form">
+                <!-- Common Details -->
+                <div class="form-card" style="margin-bottom: 2rem; max-width: 600px;">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--primary);">Requester Details</h3>
                     <div class="form-group">
                         <label class="form-label">Full Name</label>
-                        <input type="text" name="name" class="form-input" required placeholder="Ex. Name">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Purpose</label>
-                        <textarea name="purpose" class="form-input" required placeholder="Ex. Purpose" rows="4"
-                            style="resize: vertical;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <div style="display: flex; gap: 1rem;">
-                            <div style="flex: 2;">
-                                <label class="form-label">Amount</label>
-                                <input type="number" name="amount" class="form-input" required placeholder="0.00">
-                            </div>
-                            <div style="flex: 1;">
-                                <label class="form-label">Currency</label>
-                                <select name="currency" id="currency-select" class="form-select">
-                                    <option value="SGD">SGD</option>
-                                    <option value="OMR">OMR</option>
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div id="custom-currency-group" class="hidden" style="margin-top: 1rem;">
-                            <label class="form-label">Specify Currency</label>
-                            <input type="text" id="custom-currency" class="form-input" placeholder="Ex. INR">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Attachments (Optional)</label>
-                        <input type="file" id="file-input" class="form-input" style="padding: 10px 12px; height: auto;"
-                            multiple>
-                        <div id="file-list" class="file-list"></div>
-                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
-                            You can click "Choose Files" multiple times to add more documents.
-                        </p>
+                        <input type="text" id="req-name" class="form-input" required placeholder="Ex. Your Name">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
-                        <input type="email" name="email" class="form-input" required placeholder="you@company.com">
+                        <input type="email" id="req-email" class="form-input" required placeholder="you@company.com">
                     </div>
-                    <button type="submit" class="cta-btn" style="width: 100%;">Submit Request</button>
-                </form>
-            </div>
+                </div>
+
+                <!-- Dynamic Items Container -->
+                <div id="items-container" style="max-width: 800px; margin: 0 auto;">
+                    <!-- Items will be added here -->
+                </div>
+
+                <!-- Add Item Button -->
+                <div style="text-align: center; margin-bottom: 2rem; margin-top: 1rem;">
+                    <button type="button" id="add-item-btn" class="nav-btn"
+                        style="background: var(--surface); border: 2px dashed var(--secondary); color: var(--secondary); width: 100%; max-width: 800px;">
+                        + Add Another Purpose
+                    </button>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="container" style="max-width: 480px; text-align: center;">
+                    <button type="submit" class="cta-btn" style="width: 100%; max-width: 400px;">Submit All
+                        Requests</button>
+                </div>
+            </form>
         </section>
 
         <!-- Status Section -->
@@ -608,10 +593,13 @@
         const app = {
             apiUrl: "https://script.google.com/macros/s/AKfycbxCbr5j69aQBka65zxAUSbCCQ39g0rOcfUCtOVeP4Gjf9KQlsTbNKm5nV6Z2JtLezuiNg/exec",
 
+            itemCount: 0,
+
             init() {
                 this.cacheDOM();
                 this.bindEvents();
                 this.checkSetup();
+                this.addItem(); // Add first item by default
             },
 
             cacheDOM() {
@@ -624,26 +612,19 @@
                 this.sections = document.querySelectorAll('section');
 
                 this.reqForm = document.getElementById('request-form');
+                this.itemsContainer = document.getElementById('items-container');
+                this.addItemBtn = document.getElementById('add-item-btn');
+
                 this.statusForm = document.getElementById('status-form');
-
-                // Currency Inputs
-                this.currencySelect = document.getElementById('currency-select');
-                this.customCurrencyGroup = document.getElementById('custom-currency-group');
-                this.customCurrencyInput = document.getElementById('custom-currency');
-
                 this.statusResults = document.getElementById('status-results');
                 this.statusSearchView = document.getElementById('status-search-view');
                 this.statusResultsView = document.getElementById('status-results-view');
                 this.backToSearchBtn = document.getElementById('back-to-search-btn');
                 this.keywordSearch = document.getElementById('keyword-search');
-                this.fileInput = document.getElementById('file-input');
-                this.fileListContainer = document.getElementById('file-list');
-                this.selectedFiles = []; // Internal array to track files
-                this.fetchedRequests = []; // Store fetched data for filtering
+                this.fetchedRequests = [];
             },
 
             bindEvents() {
-                // Setup
                 this.saveApiBtn.addEventListener('click', () => {
                     const url = this.apiUrlInput.value.trim();
                     if (url) {
@@ -653,72 +634,167 @@
                     }
                 });
 
-                // Navigation
                 this.navBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const target = e.target.dataset.target;
+                        const target = e.target.getAttribute('data-target') || e.target.dataset.target;
+                        if (!target) return;
 
-                        // Active Class
-                        this.navBtns.forEach(b => b.classList.remove('active'));
+                        this.navBtns.forEach(b => {
+                            if (b.dataset.target) b.classList.remove('active')
+                        });
                         e.target.classList.add('active');
 
-                        // Show Section
                         this.sections.forEach(s => {
                             s.classList.remove('active');
                             if (s.id === target) {
                                 s.classList.add('active');
-                                // Reset status view if navigating to it
-                                if (target === 'status-section') {
-                                    this.resetStatusView();
-                                }
+                                if (target === 'status-section') this.resetStatusView();
                             }
                         });
                     });
                 });
 
-                // Status Back Button
-                this.backToSearchBtn.addEventListener('click', () => {
-                    this.resetStatusView();
-                });
-
-                // File Input Listener
-                this.fileInput.addEventListener('change', (e) => {
-                    const files = Array.from(e.target.files);
-                    files.forEach(file => {
-                        // Avoid duplicates if possible (optional)
-                        const isDuplicate = this.selectedFiles.some(f => f.name === file.name && f.size === file.size);
-                        if (!isDuplicate) {
-                            this.selectedFiles.push(file);
-                        }
-                    });
-                    this.renderFileList();
-                    // Clear the input so the same file can be selected again if removed
-                    this.fileInput.value = '';
-                });
-
-                // Currency Toggle
-                this.currencySelect.addEventListener('change', (e) => {
-                    if (e.target.value === 'Other') {
-                        this.customCurrencyGroup.classList.remove('hidden');
-                    } else {
-                        this.customCurrencyGroup.classList.add('hidden');
-                    }
-                });
-
-                // Forms
+                this.backToSearchBtn.addEventListener('click', () => this.resetStatusView());
                 this.reqForm.addEventListener('submit', (e) => this.handleRequest(e));
                 this.statusForm.addEventListener('submit', (e) => this.handleStatus(e));
-
-                // Keyword Filter
                 this.keywordSearch.addEventListener('input', () => this.filterRequests());
+
+                if (this.addItemBtn) {
+                    this.addItemBtn.addEventListener('click', () => this.addItem());
+                }
+            },
+
+            addItem() {
+                this.itemCount++;
+                const id = this.itemCount;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'form-card item-card';
+                itemDiv.id = `item-${id}`;
+                itemDiv.style.position = 'relative';
+                itemDiv.style.marginBottom = '1.5rem';
+                itemDiv.style.maxWidth = '100%';
+
+                const deleteBtn = id > 1 ? `
+                    <button type="button" class="remove-item-btn" style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--error); cursor: pointer; font-weight: bold; font-size: 0.9rem;" onclick="document.getElementById('item-${id}').remove()">
+                        ✕ Remove
+                    </button>
+                ` : '';
+
+                itemDiv.innerHTML = `
+                    ${deleteBtn}
+                    <h4 style="margin-bottom: 1rem; color: var(--text-muted); font-weight: 700;">Purpose #${id}</h4>
+                    <div class="form-group">
+                        <label class="form-label">Purpose</label>
+                        <textarea class="form-input item-purpose" required placeholder="Ex. Purpose" rows="6" style="min-height: 120px; width: 100%; resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; gap: 1rem;">
+                            <div style="flex: 2;">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-input item-amount" required placeholder="0.00000000" step="0.00000001">
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="form-label">Currency</label>
+                                <select class="form-select item-currency" onchange="app.toggleCurrency(this)">
+                                    <option value="SGD">SGD</option>
+                                    <option value="OMR">OMR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" class="form-input item-currency-custom hidden" style="margin-top: 5px;" placeholder="Specify">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bank</label>
+                        <select class="form-select item-bank" onchange="app.toggleBank(this)" required>
+                            <option value="" disabled selected>Select Bank</option>
+                            <option value="Bank Muscat">Bank Muscat</option>
+                            <option value="Bank Dhofar">Bank Dhofar</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input type="text" class="form-input item-bank-custom hidden" style="margin-top: 8px;" placeholder="Enter bank name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Attachments</label>
+                        <input type="file" class="form-input item-file" multiple>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Select files (click multiple times to add more).</p>
+                        <div class="file-list"></div>
+                    </div>
+                `;
+
+                this.itemsContainer.appendChild(itemDiv);
+
+                // Cumulative File Logic
+                const fileInput = itemDiv.querySelector('.item-file');
+                const fileListDiv = itemDiv.querySelector('.file-list');
+                itemDiv.customFiles = []; // Store files here
+
+                fileInput.addEventListener('change', (e) => {
+                    const newFiles = Array.from(e.target.files);
+                    // Prevent duplicates if needed, or just allow
+                    itemDiv.customFiles = [...itemDiv.customFiles, ...newFiles];
+                    this.renderFileList(itemDiv.customFiles, fileListDiv, itemDiv);
+                    fileInput.value = ''; // Reset input to allow adding more
+                });
+            },
+
+            renderFileList(files, container, itemDiv) {
+                container.innerHTML = '';
+                files.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <div class="file-info">
+                            <span style="font-size: 1.2em;">📄</span>
+                            <span style="font-weight: 500;">${file.name}</span>
+                            <span style="color: var(--text-muted); font-size: 0.8em;">(${(file.size / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <button type="button" class="remove-file">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    `;
+
+                    item.querySelector('.remove-file').addEventListener('click', () => {
+                        itemDiv.customFiles.splice(index, 1);
+                        this.renderFileList(itemDiv.customFiles, container, itemDiv);
+                    });
+
+                    container.appendChild(item);
+                });
+            },
+
+            toggleCurrency(select) {
+                const customInput = select.nextElementSibling;
+                if (select.value === 'Other') {
+                    customInput.classList.remove('hidden');
+                    customInput.required = true;
+                    customInput.focus();
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.required = false;
+                    customInput.value = '';
+                }
+            },
+
+            toggleBank(select) {
+                const customInput = select.nextElementSibling;
+                if (select.value === 'Other') {
+                    customInput.classList.remove('hidden');
+                    customInput.required = true;
+                    customInput.focus();
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.required = false;
+                    customInput.value = '';
+                }
             },
 
             checkSetup() {
-                if (!this.apiUrl) {
-                    this.modal.classList.remove('hidden');
-                } else {
-                    this.modal.classList.add('hidden');
-                }
+                if (!this.apiUrl) this.modal.classList.remove('hidden');
+                else this.modal.classList.add('hidden');
             },
 
             showLoader(show) {
@@ -727,65 +803,28 @@
             },
 
             resetStatusView() {
-                if (this.statusSearchView && this.statusResultsView) {
-                    this.statusSearchView.classList.remove('hidden');
-                    this.statusResultsView.classList.add('hidden');
-                    this.statusResults.innerHTML = '';
-                    document.getElementById('status-email').value = '';
-                    if (this.keywordSearch) this.keywordSearch.value = '';
-                    this.fetchedRequests = [];
-                }
+                this.statusSearchView.classList.remove('hidden');
+                this.statusResultsView.classList.add('hidden');
+                this.statusResults.innerHTML = '';
+                document.getElementById('status-email').value = '';
+                this.keywordSearch.value = '';
+                this.fetchedRequests = [];
             },
 
-            renderFileList() {
-                this.fileListContainer.innerHTML = '';
-                this.selectedFiles.forEach((file, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'file-item';
-                    item.innerHTML = `
-                        <div class="file-info">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                            <span>${file.name}</span>
-                        </div>
-                        <button type="button" class="remove-file" data-index="${index}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    `;
-                    this.fileListContainer.appendChild(item);
+            async readFileAsBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve({
+                            name: file.name,
+                            type: file.type,
+                            base64: base64
+                        });
+                    };
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
                 });
-
-                // Add remove listeners
-                this.fileListContainer.querySelectorAll('.remove-file').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const index = parseInt(e.currentTarget.dataset.index);
-                        this.selectedFiles.splice(index, 1);
-                        this.renderFileList();
-                    });
-                });
-            },
-
-            async sendRequest(data) {
-                if (!this.apiUrl) {
-                    alert("API URL not configured!");
-                    return;
-                }
-
-                try {
-                    // Note: Sending as text/plain to avoid CORS Preflight issues with Google Apps Script
-                    const response = await fetch(this.apiUrl, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: {
-                            'Content-Type': 'text/plain;charset=utf-8',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    return await response.json();
-                } catch (error) {
-                    console.error("Fetch Error:", error);
-                    alert("Connection Failed. Check your URL or Internet.");
-                    return { status: "error", message: error.toString() };
-                }
             },
 
             async handleRequest(e) {
@@ -793,66 +832,90 @@
                 const submitBtn = this.reqForm.querySelector('button[type="submit"]');
                 submitBtn.disabled = true;
                 submitBtn.innerText = "Submitting...";
-
                 this.showLoader(true);
 
-                const formData = new FormData(this.reqForm);
+                try {
+                    const name = document.getElementById('req-name').value;
+                    const email = document.getElementById('req-email').value;
 
-                let currency = formData.get('currency');
-                if (currency === 'Other') {
-                    currency = this.customCurrencyInput.value.trim();
-                    if (!currency) currency = 'Other'; // Fallback
-                }
+                    const itemDivs = this.itemsContainer.querySelectorAll('.item-card');
+                    const items = [];
 
-                const data = {
-                    action: 'submit',
-                    name: formData.get('name'),
-                    purpose: formData.get('purpose'),
-                    amount: formData.get('amount'),
-                    currency: currency,
-                    email: formData.get('email'),
-                    files: [] // Changed 'file' to 'files' array
-                };
+                    for (const div of itemDivs) {
+                        const purpose = div.querySelector('.item-purpose').value;
+                        const amount = div.querySelector('.item-amount').value;
+                        const currencySelect = div.querySelector('.item-currency');
+                        let currency = currencySelect.value;
+                        if (currency === 'Other') {
+                            currency = div.querySelector('.item-currency-custom').value;
+                        }
 
-                // If files are internal array has items, convert each to Base64
-                if (this.selectedFiles.length > 0) {
-                    try {
-                        data.files = await Promise.all(
-                            this.selectedFiles.map(file => this.fileToBase64(file))
-                        );
-                    } catch (err) {
-                        console.error("File Read Error:", err);
-                        alert("Failed to read files. Please try again.");
-                        this.showLoader(false);
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = "Submit Request";
-                        return;
+                        const bankSelect = div.querySelector('.item-bank');
+                        let bank = bankSelect.value;
+                        if (bank === 'Other') {
+                            bank = div.querySelector('.item-bank-custom').value;
+                        }
+
+                        const files = div.customFiles || [];
+                        const fileObjs = [];
+                        if (files.length > 0) {
+                            for (const file of files) {
+                                const fileData = await this.readFileAsBase64(file);
+                                fileObjs.push(fileData);
+                            }
+                        }
+
+                        items.push({
+                            purpose,
+                            amount,
+                            currency,
+                            bank,
+                            files: fileObjs
+                        });
                     }
-                }
 
-                const res = await this.sendRequest(data);
-                this.showLoader(false);
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Submit Request";
+                    const payload = {
+                        action: "submit",
+                        name: name,
+                        email: email,
+                        items: items
+                    };
 
-                if (res.status === 'success') {
-                    alert(res.message || "Request Submitted Successfully!");
-                    this.reqForm.reset();
-                    this.selectedFiles = [];
-                    this.renderFileList();
-                    this.customCurrencyGroup.classList.add('hidden');
-                    // Go to home
-                    document.querySelector('[data-target="home-section"]').click();
-                } else if (res.status === 'warning') {
-                    alert("⚠️ " + res.message);
-                    this.reqForm.reset();
-                    this.selectedFiles = [];
-                    this.renderFileList();
-                    this.customCurrencyGroup.classList.add('hidden');
-                    document.querySelector('[data-target="home-section"]').click();
-                } else {
-                    alert("❌ Error: " + res.message);
+                    const result = await this.sendRequest(payload);
+
+                    if (result.status === "success") {
+                        alert(result.message || "Request Submitted Successfully!");
+                        this.reqForm.reset();
+                        this.itemsContainer.innerHTML = '';
+                        this.itemCount = 0;
+                        this.addItem();
+                        document.querySelector('[data-target="home-section"]').click();
+                    } else {
+                        alert("Error: " + result.message);
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert("An error occurred: " + err.message);
+                } finally {
+                    this.showLoader(false);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit All Requests";
                 }
+            },
+
+            async sendRequest(data) {
+                if (!this.apiUrl) {
+                    alert("API URL not configured!");
+                    return { status: "error", message: "API URL missing" };
+                }
+                const response = await fetch(this.apiUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+                return await response.json();
             },
 
             async handleStatus(e) {
@@ -868,18 +931,13 @@
 
                 this.showLoader(false);
 
-                if (res.status === 'success') {
+                if (res && res.status === 'success') {
                     this.fetchedRequests = res.data;
-                    if (this.keywordSearch) this.keywordSearch.value = '';
-
-                    // Show results view, hide search view
                     this.statusSearchView.classList.add('hidden');
                     this.statusResultsView.classList.remove('hidden');
-
                     this.renderFilteredResults(this.fetchedRequests);
-
                 } else {
-                    alert("Error: " + res.message);
+                    alert("Error: " + (res ? res.message : "Start Failed"));
                 }
             },
 
@@ -905,14 +963,13 @@
 
             renderFilteredResults(requests) {
                 this.statusResults.innerHTML = '';
-                if (requests.length === 0) {
+                if (!requests || requests.length === 0) {
                     this.statusResults.innerHTML = '<p style="text-align:center; color:var(--text-muted); grid-column: 1/-1;">No matching requests found.</p>';
                     return;
                 }
 
                 const query = this.keywordSearch.value.trim();
-
-                // Clone and reverse to show newest first without modifying original
+                // Clone and reverse
                 [...requests].reverse().forEach(req => {
                     this.renderRequestCard(req, query);
                 });
@@ -930,38 +987,34 @@
                 let statusClass = 'status-pending';
                 if (req.status === 'Approved') statusClass = 'status-approved';
                 if (req.status === 'Rejected') statusClass = 'status-rejected';
-                if (req.status === 'Check Status') statusClass = 'status-pending'; // Or new class
 
                 const highlightedPurpose = this.highlightText(req.purpose, query);
                 const highlightedId = this.highlightText(req.id, query);
                 const highlightedAmount = this.highlightText(req.amount, query);
                 const highlightedName = this.highlightText(req.name, query);
 
-                // Handle multiple attachments
                 let attachmentHtml = '';
                 if (req.attachment) {
                     const urls = req.attachment.split('\n').filter(url => url.trim() !== '');
-                    attachmentHtml = `
-                        <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 8px;">
-                            ${urls.map((url, idx) => `
-                                <a href="${url}" target="_blank" class="status-badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem;">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                                    Attachment ${urls.length > 1 ? idx + 1 : ''}
-                                </a>
-                            `).join('')}
-                        </div>
-                    `;
+                    if (urls.length > 0) {
+                        attachmentHtml = `
+                            <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${urls.map((url, idx) => `
+                                    <a href="${url}" target="_blank" class="status-badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                        Attachment ${urls.length > 1 ? idx + 1 : ''}
+                                    </a>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
                 }
 
-                // Vote breakdown
                 let votesHtml = '';
                 if (req.votes && req.votes.length > 0) {
                     votesHtml = '<div class="vote-list">';
                     req.votes.forEach(v => {
-                        let color = '#fbbf24'; // pending
-                        // Revert to "Pending" for production feel
-                        // if (v.status === 'Pending') v.status = 'Waiting...'; 
-
+                        let color = '#fbbf24';
                         const statusLower = String(v.status).toLowerCase();
                         if (statusLower === 'approved') color = '#10b981';
                         if (statusLower === 'rejected') color = '#ef4444';
@@ -990,6 +1043,9 @@
                         </div>
                         <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
                             Requester: ${highlightedName}
+                        </div>
+                        <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
+                            Bank: <strong style="color:var(--text);">${req.bank || 'N/A'}</strong>
                         </div>
                         ${attachmentHtml}
                         ${votesHtml}
