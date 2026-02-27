@@ -685,6 +685,10 @@
                     ${deleteBtn}
                     <h4 style="margin-bottom: 1rem; color: var(--text-muted); font-weight: 700;">Purpose #${id}</h4>
                     <div class="form-group">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-input item-company-name" required placeholder="Ex. Company Name">
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Purpose</label>
                         <textarea class="form-input item-purpose" required placeholder="Ex. Purpose" rows="6" style="min-height: 120px; width: 100%; resize: vertical;"></textarea>
                     </div>
@@ -842,6 +846,7 @@
                     const items = [];
 
                     for (const div of itemDivs) {
+                        const companyName = div.querySelector('.item-company-name').value;
                         const purpose = div.querySelector('.item-purpose').value;
                         const amount = div.querySelector('.item-amount').value;
                         const currencySelect = div.querySelector('.item-currency');
@@ -866,6 +871,7 @@
                         }
 
                         items.push({
+                            companyName,
                             purpose,
                             amount,
                             currency,
@@ -1043,6 +1049,9 @@
                         </div>
                         <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
                             Requester: ${highlightedName}
+                        </div>
+                        <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
+                            Company: <strong style="color:var(--text);">${req.companyName || 'N/A'}</strong>
                         </div>
                         <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 0.5rem;">
                             Bank: <strong style="color:var(--text);">${req.bank || 'N/A'}</strong>
